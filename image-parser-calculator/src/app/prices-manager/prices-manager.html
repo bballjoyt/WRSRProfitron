@@ -1,0 +1,247 @@
+<div class="prices-manager-container">
+  <header class="manager-header">
+    <h2>Prices Data Manager</h2>
+    <p>Manage NATO/USSR resource prices data with full CRUD operations</p>
+  </header>
+
+  <!-- Datasets Overview -->
+  <section class="datasets-section">
+    <h3>Loaded Datasets ({{ datasets.length }})</h3>
+
+    <div *ngIf="datasets.length === 0" class="no-data">
+      <p>No prices datasets loaded. Upload Prices[n].png files to get started.</p>
+    </div>
+
+    <div *ngIf="datasets.length > 0" class="datasets-table">
+      <div class="table-controls">
+        <button
+          (click)="deleteSelectedDatasets()"
+          [disabled]="selectedDatasets.length === 0"
+          class="btn-danger">
+          Delete Selected ({{ selectedDatasets.length }})
+        </button>
+        <button (click)="clearAllData()" class="btn-danger">Clear All Data</button>
+        <button (click)="exportData()" class="btn-secondary">Export Data</button>
+      </div>
+
+      <table class="datasets-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" (change)="selectAllDatasets($event)"></th>
+            <th>Filename</th>
+            <th>Resources</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dataset of datasets">
+            <td>
+              <input
+                type="checkbox"
+                [checked]="selectedDatasets.includes(dataset.filename)"
+                (change)="toggleDatasetSelection(dataset.filename)">
+            </td>
+            <td>{{ dataset.filename }}</td>
+            <td>{{ dataset.totalResources }}</td>
+            <td>{{ dataset.timestamp | date:'medium' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Workdays Pricing Section -->
+  <section class="workdays-section">
+    <h3>Workdays Pricing</h3>
+    <p>Set custom cost values for Workdays (construction labor). These values will be used in construction cost calculations.</p>
+
+    <div class="workdays-pricing-container">
+      <div class="workdays-form">
+        <div class="pricing-row">
+          <label for="ussrWorkdays">USSR Cost per Workday:</label>
+          <div class="input-group">
+            <span class="currency-symbol">₽</span>
+            <input
+              id="ussrWorkdays"
+              type="number"
+              [(ngModel)]="workdaysUSSRCost"
+              step="0.01"
+              min="0"
+              class="workdays-input"
+              placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="pricing-row">
+          <label for="natoWorkdays">NATO Cost per Workday:</label>
+          <div class="input-group">
+            <span class="currency-symbol">$</span>
+            <input
+              id="natoWorkdays"
+              type="number"
+              [(ngModel)]="workdaysNATOCost"
+              step="0.01"
+              min="0"
+              class="workdays-input"
+              placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="workdays-actions">
+          <button (click)="saveWorkdaysPricing()" class="btn-save">Save Workdays Pricing</button>
+          <button (click)="resetWorkdaysPricing()" class="btn-reset">Reset to Zero</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resources Table -->
+  <section class="resources-section">
+    <div class="section-header">
+      <h3>Current Resource Prices ({{ filteredResources.length }} of {{ resources.length }})</h3>
+
+      <!-- Search Bar -->
+      <div class="search-container" *ngIf="resources.length > 0">
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Search resources by name..."
+            class="search-input">
+          <button
+            *ngIf="searchTerm"
+            (click)="clearSearch()"
+            class="clear-search-btn"
+            title="Clear search">
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="resources.length === 0" class="no-data">
+      <p>No resource prices available. Upload some Prices files first.</p>
+    </div>
+
+    <div *ngIf="resources.length > 0 && filteredResources.length === 0" class="no-data">
+      <p>No resources match your search term "{{ searchTerm }}"</p>
+      <button (click)="clearSearch()" class="btn-secondary">Clear Search</button>
+    </div>
+
+    <div *ngIf="filteredResources.length > 0" class="resources-table-container">
+      <table class="resources-table">
+        <thead>
+          <tr>
+            <th>Resource Name</th>
+            <th colspan="2">NATO Prices</th>
+            <th colspan="2">USSR Prices</th>
+            <th>Last Updated</th>
+            <th>Actions</th>
+          </tr>
+          <tr class="sub-header">
+            <th></th>
+            <th>Sell</th>
+            <th>Buy</th>
+            <th>Sell</th>
+            <th>Buy</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let resource of filteredResources" [class.editing]="originalResourceName === resource.name">
+            <td class="resource-name">
+              <input
+                *ngIf="originalResourceName === resource.name; else displayResourceName"
+                type="text"
+                [(ngModel)]="editingResource!.name"
+                class="name-input"
+                placeholder="Resource name">
+              <ng-template #displayResourceName>{{ resource.name }}</ng-template>
+            </td>
+
+            <!-- NATO Prices -->
+            <td>
+              <input
+                *ngIf="originalResourceName === resource.name; else displayNatoSell"
+                type="number"
+                [(ngModel)]="editingResource!.prices.natoSell"
+                step="0.01"
+                class="price-input">
+              <ng-template #displayNatoSell>{{ resource.prices.natoSell }}</ng-template>
+            </td>
+            <td>
+              <input
+                *ngIf="originalResourceName === resource.name; else displayNatoBuy"
+                type="number"
+                [(ngModel)]="editingResource!.prices.natoBuy"
+                step="0.01"
+                class="price-input">
+              <ng-template #displayNatoBuy>{{ resource.prices.natoBuy }}</ng-template>
+            </td>
+
+            <!-- USSR Prices -->
+            <td>
+              <input
+                *ngIf="originalResourceName === resource.name; else displayUssrSell"
+                type="number"
+                [(ngModel)]="editingResource!.prices.ussrSell"
+                step="0.01"
+                class="price-input">
+              <ng-template #displayUssrSell>{{ resource.prices.ussrSell }}</ng-template>
+            </td>
+            <td>
+              <input
+                *ngIf="originalResourceName === resource.name; else displayUssrBuy"
+                type="number"
+                [(ngModel)]="editingResource!.prices.ussrBuy"
+                step="0.01"
+                class="price-input">
+              <ng-template #displayUssrBuy>{{ resource.prices.ussrBuy }}</ng-template>
+            </td>
+
+            <td class="last-updated">{{ resource.lastUpdated | date:'short' }}</td>
+
+            <!-- Actions -->
+            <td class="actions">
+              <div *ngIf="originalResourceName === resource.name; else viewActions" class="edit-actions">
+                <button (click)="saveResource()" class="btn-save">Save</button>
+                <button (click)="cancelEdit()" class="btn-cancel">Cancel</button>
+              </div>
+              <ng-template #viewActions>
+                <div class="view-actions">
+                  <button (click)="editResource(resource)" class="btn-edit">Edit</button>
+                  <button (click)="deleteResource(resource.name)" class="btn-delete">Delete</button>
+                </div>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Statistics -->
+  <section class="stats-section" *ngIf="resources.length > 0">
+    <h3>Statistics</h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h4>Total Resources</h4>
+        <span class="stat-value">{{ resources.length }}</span>
+      </div>
+      <div class="stat-card">
+        <h4>Datasets Loaded</h4>
+        <span class="stat-value">{{ datasets.length }}</span>
+      </div>
+      <div class="stat-card">
+        <h4>Avg NATO Sell Price</h4>
+        <span class="stat-value">{{ getAverageNatoSell() | number:'1.2-2' }}</span>
+      </div>
+      <div class="stat-card">
+        <h4>Avg USSR Sell Price</h4>
+        <span class="stat-value">{{ getAverageUssrSell() | number:'1.2-2' }}</span>
+      </div>
+    </div>
+  </section>
+</div>

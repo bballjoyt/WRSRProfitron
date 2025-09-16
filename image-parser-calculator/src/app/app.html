@@ -1,0 +1,42 @@
+<div class="app-container">
+  <header class="app-header">
+    <h1>Image Parser Calculator</h1>
+    <p>Upload images, extract text, and perform calculations on numerical data</p>
+  </header>
+
+  <nav class="app-nav">
+    <button
+      (click)="navigateToView('/industry')"
+      [class.active]="isActiveRoute('/industry')"
+      class="nav-btn"
+    >
+      Industry Manager
+    </button>
+    <button
+      (click)="navigateToView('/upload')"
+      [class.active]="isActiveRoute('/upload')"
+      class="nav-btn"
+    >
+      Upload Image
+    </button>
+    <button
+      (click)="navigateToView('/prices')"
+      [class.active]="isActiveRoute('/prices')"
+      class="nav-btn"
+    >
+      Prices Manager
+    </button>
+    <button
+      (click)="navigateToView('/results')"
+      [class.active]="isActiveRoute('/results')"
+      class="nav-btn"
+    >
+      View Results
+    </button>
+  </nav>
+
+  <main class="app-main">
+    <!-- Router outlet for all pages -->
+    <router-outlet></router-outlet>
+  </main>
+</div>

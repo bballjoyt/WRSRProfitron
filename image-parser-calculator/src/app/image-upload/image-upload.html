@@ -1,0 +1,221 @@
+<div class="upload-container">
+  <h2>Upload Image for Processing</h2>
+
+  <div class="upload-options">
+    <div class="file-input-container">
+      <input
+        type="file"
+        #fileInput
+        (change)="onFileSelect($event)"
+        accept="image/*"
+        class="file-input"
+      >
+      <button (click)="fileInput.click()" class="upload-btn">
+        Choose Image
+      </button>
+
+    </div>
+
+    <div class="or-divider">OR</div>
+
+    <div
+      class="paste-area"
+      (paste)="onPaste($event)"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event)"
+      tabindex="0"
+    >
+      <div class="paste-content">
+        <div class="paste-icon">📋</div>
+        <div class="paste-text">
+          <strong>Paste screenshot here</strong>
+          <p>Click here and press Ctrl+V (or Cmd+V) to paste from clipboard</p>
+          <p><em>Or drag and drop an image file</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="selectedFile" class="preview-container">
+    <h3>Selected Image:</h3>
+    <img [src]="imagePreview" alt="Preview" class="image-preview">
+    <p>{{ selectedFile.name }}</p>
+
+    <div class="data-type-selector">
+      <label class="radio-option">
+        <input
+          type="radio"
+          name="dataType"
+          value="industry"
+          [(ngModel)]="selectedDataType"
+          class="radio-input">
+        <span class="radio-label">Industry Data</span>
+      </label>
+      <label class="radio-option">
+        <input
+          type="radio"
+          name="dataType"
+          value="prices"
+          [(ngModel)]="selectedDataType"
+          class="radio-input">
+        <span class="radio-label">Prices Data</span>
+      </label>
+    </div>
+
+    <button
+      (click)="extractData()"
+      [disabled]="isProcessing"
+      class="process-btn"
+    >
+      {{ isProcessing ? 'Processing...' : 'Extract Data' }}
+    </button>
+  </div>
+
+  <!-- Industry Name Dialog -->
+  <div *ngIf="showIndustryNameDialog" class="industry-dialog-overlay">
+    <div class="industry-dialog">
+      <h3>Name Your Industry</h3>
+      <p>Please provide a name for this industry data. This will be used as the primary key for storage and lookup.</p>
+
+      <div class="dialog-form">
+        <label for="industryName">Industry Name:</label>
+        <input
+          id="industryName"
+          type="text"
+          [(ngModel)]="industryName"
+          placeholder="Enter industry name..."
+          class="industry-name-input"
+          (keyup.enter)="saveIndustryWithName()"
+        >
+      </div>
+
+      <div *ngIf="industryData" class="industry-preview">
+        <h4>Extracted Data Preview:</h4>
+        <p><strong>Buildings Found:</strong> {{ industryData.totalBuildings }}</p>
+        <div *ngFor="let building of industryData.buildings.slice(0, 3)" class="building-preview">
+          <strong>{{ building.name }}</strong>
+          <span *ngIf="building.pollution?.level"> (Pollution: {{ building.pollution.level }})</span>
+        </div>
+        <p *ngIf="industryData.buildings.length > 3">
+          ... and {{ industryData.buildings.length - 3 }} more buildings
+        </p>
+      </div>
+
+      <div class="dialog-actions">
+        <button
+          (click)="saveIndustryWithName()"
+          [disabled]="isProcessing || !industryName.trim()"
+          class="save-btn"
+        >
+          {{ isProcessing ? 'Saving...' : 'Save Industry' }}
+        </button>
+        <button
+          (click)="cancelIndustryNaming()"
+          [disabled]="isProcessing"
+          class="cancel-btn"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prices Data Dialog -->
+  <div *ngIf="showPricesDialog" class="industry-dialog-overlay">
+    <div class="industry-dialog">
+      <h3>Prices Data Imported</h3>
+      <p>Your prices data has been successfully extracted and is ready to import.</p>
+
+      <div class="dialog-form">
+        <label for="pricesDatasetName">Dataset Name:</label>
+        <input
+          id="pricesDatasetName"
+          type="text"
+          [(ngModel)]="pricesDatasetName"
+          placeholder="Enter dataset name..."
+          class="industry-name-input"
+          (keyup.enter)="confirmPricesImport()"
+        >
+      </div>
+
+      <div *ngIf="pricesData" class="industry-preview">
+        <h4>Import Summary:</h4>
+        <p><strong>Resources Found:</strong> {{ pricesData.totalResources }}</p>
+        <p><strong>File Type:</strong> Prices Data (NATO/USSR)</p>
+      </div>
+
+      <div class="dialog-actions">
+        <button
+          (click)="confirmPricesImport()"
+          [disabled]="isProcessing || !pricesDatasetName.trim()"
+          class="save-btn"
+        >
+          {{ isProcessing ? 'Importing...' : 'Import Prices' }}
+        </button>
+        <button
+          (click)="cancelPricesImport()"
+          [disabled]="isProcessing"
+          class="cancel-btn"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="extractedData" class="extracted-data">
+    <h3>Extracted Data:</h3>
+
+    <div *ngIf="isPricesFile; else checkIndustryData">
+      <div class="prices-summary">
+        <p><strong>Resources Found:</strong> {{ extractedData.totalResources }}</p>
+        <p><strong>File Type:</strong> Prices Data (NATO/USSR)</p>
+        <p><strong>Status:</strong> Data saved and indexed for calculations</p>
+      </div>
+
+      <div class="resources-preview">
+        <h4>Resources Preview:</h4>
+        <div *ngFor="let resource of extractedData.resources.slice(0, 5)" class="resource-item">
+          <strong>{{ resource.name }}:</strong>
+          NATO ({{ resource.prices.natoSell }}/{{ resource.prices.natoBuy }}) |
+          USSR ({{ resource.prices.ussrSell }}/{{ resource.prices.ussrBuy }})
+        </div>
+        <p *ngIf="extractedData.resources.length > 5">
+          ... and {{ extractedData.resources.length - 5 }} more resources
+        </p>
+      </div>
+    </div>
+
+    <ng-template #checkIndustryData>
+      <div *ngIf="isIndustryFile && extractedData.industryData; else regularData">
+        <div class="industry-summary">
+          <p><strong>Industry Name:</strong> {{ extractedData.industryData.userDefinedName }}</p>
+          <p><strong>Buildings Found:</strong> {{ extractedData.industryData.totalBuildings }}</p>
+          <p><strong>File Type:</strong> Industry Data (Production/Consumption)</p>
+          <p><strong>Status:</strong> Data saved and indexed for calculations</p>
+        </div>
+
+        <div class="buildings-preview">
+          <h4>Buildings Preview:</h4>
+          <div *ngFor="let building of extractedData.industryData.buildings.slice(0, 3)" class="building-item">
+            <div class="building-header">
+              <strong>{{ building.name }}</strong>
+              <span *ngIf="building.pollution?.level" class="pollution-info"> (Pollution: {{ building.pollution.level }}{{ building.pollution.type ? ' ' + building.pollution.type : '' }})</span>
+            </div>
+            <div class="building-details">
+              <span *ngIf="building.production?.outputs?.length">Produces: {{ getOutputNames(building) }}</span>
+              <span *ngIf="building.consumption?.inputs?.length">Consumes: {{ getInputNames(building) }}</span>
+            </div>
+          </div>
+          <p *ngIf="extractedData.industryData.buildings.length > 3">
+            ... and {{ extractedData.industryData.buildings.length - 3 }} more buildings
+          </p>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #regularData>
+      <pre>{{ extractedData | json }}</pre>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx ng generate:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run:*)",
+      "Bash(npm start)",
+      "Read(//c/**)",
+      "Bash(node:*)",
+      "Bash(npx ng build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx ng serve:*)",
+      "Bash(find:*)",
+      "Bash(curl -s http://localhost:4203/)",
+      "Bash(ng serve:*)",
+      "Bash(pkill:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(ng build)",
+      "Bash(ng generate component:*)",
+      "WebFetch(domain:www.sovietrepublic.net)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

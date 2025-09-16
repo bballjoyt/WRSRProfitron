@@ -1,0 +1,52 @@
+<div class="building-details-container">
+  <div class="header-section">
+    <div class="header-top">
+      <button (click)="goBack()" class="back-btn">← Back to Industry Manager</button>
+      <button *ngIf="building" (click)="openEditModal()" class="edit-btn">✏️ Edit Building Data</button>
+    </div>
+    <h1 *ngIf="building">{{ building.name }}</h1>
+    <div *ngIf="loading" class="loading">Loading building details...</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+  </div>
+
+  <div *ngIf="building && !loading" class="content-sections">
+
+    <!-- Resource Details -->
+    <app-resource-details
+      [building]="building"
+      [currentWorkers]="currentWorkers"
+      [workerProductivity]="workerProductivity"
+      [showSourceControls]="true"
+      [showWorkerControls]="true"
+      (importSourceChanged)="onResourceDetailsChange($event)"
+      (exportTargetChanged)="onResourceDetailsChange($event)"
+      (currentWorkersChanged)="onCurrentWorkersChange($event)"
+      (workerProductivityChanged)="onWorkerProductivityChange($event)">
+    </app-resource-details>
+
+    <!-- Profitability Analysis -->
+    <app-profit-stats
+      [building]="building"
+      [maxWorkers]="building.maxWorkers || 1"
+      [currentWorkers]="currentWorkers"
+      [workerProductivity]="workerProductivity">
+    </app-profit-stats>
+
+    <!-- Construction Cost Analysis -->
+    <app-construction-cost
+      [building]="building"
+      [showSourceControls]="false"
+      (importSourceChanged)="onConstructionCostChange($event)">
+    </app-construction-cost>
+
+  </div>
+
+  <!-- Edit Building Modal -->
+  <app-edit-building-modal
+    *ngIf="building"
+    [building]="building"
+    [isVisible]="showEditModal"
+    (save)="onSaveBuilding($event)"
+    (cancel)="closeEditModal()">
+  </app-edit-building-modal>
+</div>

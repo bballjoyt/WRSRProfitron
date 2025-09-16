@@ -1,0 +1,69 @@
+<div class="construction-cost-container">
+  <h4>Construction Cost Analysis</h4>
+
+  <!-- Construction Materials -->
+  <table class="detail-table aligned-table" *ngIf="building.constructionCost.materials.length > 0">
+    <thead>
+      <tr>
+        <th class="expand-spacer"></th>
+        <th class="resource-col">Material</th>
+        <th class="source-col" *ngIf="showSourceControls">Source</th>
+        <th class="quantity-col">Quantity</th>
+        <th class="buy-ussr-col currency">Price USSR</th>
+        <th class="cost-ussr-col currency">USSR Total</th>
+        <th class="buy-nato-col currency">Price NATO</th>
+        <th class="cost-nato-col currency">NATO Total</th>
+        <th class="actions-spacer"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let material of building.constructionCost.materials; let i = index">
+        <td class="expand-spacer"></td>
+        <td class="resource-col">{{ material.name }}</td>
+        <td class="source-col" *ngIf="showSourceControls">
+          <select
+            [(ngModel)]="material.importSource"
+            (change)="onImportSourceChange(i, material.importSource)"
+            class="import-select">
+            <option value="own">Own</option>
+            <option value="importNATO">NATO</option>
+            <option value="importUSSR">USSR</option>
+          </select>
+        </td>
+        <td class="quantity-col">{{ material.quantity | number:'1.0-2' }}</td>
+        <td class="buy-ussr-col currency">
+          <span *ngIf="getBuyPriceUSSR(material) > 0">₽ {{ getBuyPriceUSSR(material) | number:'1.2-2' }}</span>
+          <span *ngIf="getBuyPriceUSSR(material) === 0" class="no-price">No price data</span>
+        </td>
+        <td class="cost-ussr-col currency cost-negative">₽ {{ getMaterialCostUSSR(material) | number:'1.2-2' }}</td>
+        <td class="buy-nato-col currency">
+          <span *ngIf="getBuyPriceNATO(material) > 0">$ {{ getBuyPriceNATO(material) | number:'1.2-2' }}</span>
+          <span *ngIf="getBuyPriceNATO(material) === 0" class="no-price">No price data</span>
+        </td>
+        <td class="cost-nato-col currency cost-negative">$ {{ getMaterialCostNATO(material) | number:'1.2-2' }}</td>
+        <td class="actions-spacer"></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total-row cost-total">
+        <td class="expand-spacer"></td>
+        <td class="resource-col"><strong>Construction Total</strong></td>
+        <td class="source-col" *ngIf="showSourceControls"></td>
+        <td class="quantity-col"></td>
+        <td class="buy-ussr-col"></td>
+        <td class="cost-ussr-col currency"><strong>₽ {{ getTotalConstructionCostUSSR() | number:'1.2-2' }}</strong></td>
+        <td class="buy-nato-col"></td>
+        <td class="cost-nato-col currency"><strong>$ {{ getTotalConstructionCostNATO() | number:'1.2-2' }}</strong></td>
+        <td class="actions-spacer"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div *ngIf="building.constructionCost.materials.length === 0" class="no-materials">
+    <p>No construction materials data available</p>
+  </div>
+
+  <div *ngIf="building.constructionCost.materials.length > 0 && getTotalConstructionCostUSSR() === 0 && getTotalConstructionCostNATO() === 0" class="price-data-note">
+    <p><strong>Note:</strong> Construction materials need price data to calculate costs. Import price data for materials like Concrete, Gravel, Asphalt, and Workdays from a prices screenshot.</p>
+  </div>
+</div>

@@ -1,0 +1,197 @@
+.resource-details-container {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.resource-details-container h4 {
+  margin: 0 0 10px 0;
+  color: #2d3748;
+  font-size: 1em;
+  font-weight: 600;
+  border-bottom: 1px solid #667eea;
+  padding-bottom: 5px;
+}
+
+/* Worker Information Styles */
+.worker-info {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 10px 0;
+  border: 1px solid #e9ecef;
+}
+
+.worker-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.worker-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9em;
+}
+
+.worker-value {
+  color: #2d3748;
+  font-weight: 500;
+  margin-right: 15px;
+}
+
+.worker-input {
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  width: 80px;
+  margin-right: 15px;
+  font-size: 0.9em;
+}
+
+.worker-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.detail-table th {
+  background: #f7fafc;
+  padding: 6px 8px;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* Aligned table to match main table columns */
+.aligned-table {
+  table-layout: fixed;
+}
+
+.aligned-table .expand-spacer {
+  width: 50px; /* Match expand-col */
+}
+
+.aligned-table .resource-col {
+  width: 150px; /* Resource name column */
+}
+
+.aligned-table .type-col {
+  width: 80px;
+  text-align: center;
+}
+
+.aligned-table .source-col {
+  width: 100px;
+  text-align: center;
+}
+
+.aligned-table .quantity-col {
+  width: 120px;
+  text-align: center;
+}
+
+.aligned-table .buy-ussr-col {
+  width: 100px;
+  text-align: right;
+}
+
+.aligned-table .cost-ussr-col {
+  width: 120px; /* Match Daily Cost USSR column */
+  text-align: right;
+}
+
+.aligned-table .buy-nato-col {
+  width: 100px;
+  text-align: right;
+}
+
+.aligned-table .cost-nato-col {
+  width: 120px; /* Match Daily Cost NATO column */
+  text-align: right;
+}
+
+.aligned-table .actions-spacer {
+  width: 100px; /* Match actions-col */
+}
+
+.total-row {
+  border-top: 2px solid #667eea;
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.total-row td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.profit-row {
+  background-color: #edf7ed !important;
+  border-top: 2px solid #48bb78 !important;
+}
+
+/* Color coding for costs and profits */
+.cost-negative {
+  color: #e53e3e !important;
+}
+
+.profit-positive {
+  color: #38a169 !important;
+}
+
+.cost-total {
+  background-color: #fed7d7 !important;
+  border-top: 2px solid #e53e3e !important;
+}
+
+.profit-total {
+  background-color: #c6f6d5 !important;
+  border-top: 2px solid #38a169 !important;
+}
+
+.net-profit-total {
+  background-color: #ebf8ff !important;
+  border-top: 3px solid #667eea !important;
+  font-size: 1.1em;
+}
+
+/* Spacing between input and output tables */
+.output-table {
+  margin-top: 15px;
+}
+
+/* Import select styling */
+.import-select {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.875em;
+}
+
+.import-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}

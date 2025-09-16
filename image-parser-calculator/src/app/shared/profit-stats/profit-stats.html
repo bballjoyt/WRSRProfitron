@@ -1,0 +1,99 @@
+<div class="profit-stats-container">
+  <h4>Profitability Analysis</h4>
+
+  <div class="stats-grid">
+    <!-- USSR Profitability -->
+    <div class="stats-section ussr-section">
+      <h5>USSR Market</h5>
+      <div class="stats-group">
+        <div class="stat-item">
+          <span class="stat-label">Daily Profit:</span>
+          <span class="stat-value" [class.profit]="getDailyProfitUSSR() > 0" [class.loss]="getDailyProfitUSSR() < 0">
+            ₽ {{ getDailyProfitUSSR() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Monthly Profit:</span>
+          <span class="stat-value" [class.profit]="getMonthlyProfitUSSR() > 0" [class.loss]="getMonthlyProfitUSSR() < 0">
+            ₽ {{ getMonthlyProfitUSSR() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Yearly Profit:</span>
+          <span class="stat-value" [class.profit]="getYearlyProfitUSSR() > 0" [class.loss]="getYearlyProfitUSSR() < 0">
+            ₽ {{ getYearlyProfitUSSR() | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="stats-group per-worker" *ngIf="maxWorkers > 0">
+        <h6>Per Worker ({{ maxWorkers }} workers)</h6>
+        <div class="stat-item">
+          <span class="stat-label">Daily/Worker:</span>
+          <span class="stat-value" [class.profit]="getDailyProfitPerWorkerUSSR() > 0" [class.loss]="getDailyProfitPerWorkerUSSR() < 0">
+            ₽ {{ getDailyProfitPerWorkerUSSR() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Monthly/Worker:</span>
+          <span class="stat-value" [class.profit]="getMonthlyProfitPerWorkerUSSR() > 0" [class.loss]="getMonthlyProfitPerWorkerUSSR() < 0">
+            ₽ {{ getMonthlyProfitPerWorkerUSSR() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Yearly/Worker:</span>
+          <span class="stat-value" [class.profit]="getYearlyProfitPerWorkerUSSR() > 0" [class.loss]="getYearlyProfitPerWorkerUSSR() < 0">
+            ₽ {{ getYearlyProfitPerWorkerUSSR() | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NATO Profitability -->
+    <div class="stats-section nato-section">
+      <h5>NATO Market</h5>
+      <div class="stats-group">
+        <div class="stat-item">
+          <span class="stat-label">Daily Profit:</span>
+          <span class="stat-value" [class.profit]="getDailyProfitNATO() > 0" [class.loss]="getDailyProfitNATO() < 0">
+            $ {{ getDailyProfitNATO() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Monthly Profit:</span>
+          <span class="stat-value" [class.profit]="getMonthlyProfitNATO() > 0" [class.loss]="getMonthlyProfitNATO() < 0">
+            $ {{ getMonthlyProfitNATO() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Yearly Profit:</span>
+          <span class="stat-value" [class.profit]="getYearlyProfitNATO() > 0" [class.loss]="getYearlyProfitNATO() < 0">
+            $ {{ getYearlyProfitNATO() | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="stats-group per-worker" *ngIf="maxWorkers > 0">
+        <h6>Per Worker ({{ maxWorkers }} workers)</h6>
+        <div class="stat-item">
+          <span class="stat-label">Daily/Worker:</span>
+          <span class="stat-value" [class.profit]="getDailyProfitPerWorkerNATO() > 0" [class.loss]="getDailyProfitPerWorkerNATO() < 0">
+            $ {{ getDailyProfitPerWorkerNATO() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Monthly/Worker:</span>
+          <span class="stat-value" [class.profit]="getMonthlyProfitPerWorkerNATO() > 0" [class.loss]="getMonthlyProfitPerWorkerNATO() < 0">
+            $ {{ getMonthlyProfitPerWorkerNATO() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Yearly/Worker:</span>
+          <span class="stat-value" [class.profit]="getYearlyProfitPerWorkerNATO() > 0" [class.loss]="getYearlyProfitPerWorkerNATO() < 0">
+            $ {{ getYearlyProfitPerWorkerNATO() | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

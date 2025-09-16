@@ -1,0 +1,154 @@
+.construction-cost-container {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  margin-top: 15px;
+}
+
+.construction-cost-container h4 {
+  margin: 0 0 10px 0;
+  color: #2d3748;
+  font-size: 1em;
+  font-weight: 600;
+  border-bottom: 1px solid #667eea;
+  padding-bottom: 5px;
+}
+
+/* Reuse the same table styles as resource-details */
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.detail-table th {
+  background: #f7fafc;
+  padding: 6px 8px;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* Aligned table to match main table columns */
+.aligned-table {
+  table-layout: fixed;
+}
+
+.aligned-table .expand-spacer {
+  width: 50px;
+}
+
+.aligned-table .resource-col {
+  width: 150px;
+}
+
+.aligned-table .source-col {
+  width: 100px;
+  text-align: center;
+}
+
+.aligned-table .quantity-col {
+  width: 120px;
+  text-align: center;
+}
+
+.aligned-table .buy-ussr-col {
+  width: 100px;
+  text-align: right;
+}
+
+.aligned-table .cost-ussr-col {
+  width: 120px;
+  text-align: right;
+}
+
+.aligned-table .buy-nato-col {
+  width: 100px;
+  text-align: right;
+}
+
+.aligned-table .cost-nato-col {
+  width: 120px;
+  text-align: right;
+}
+
+.aligned-table .actions-spacer {
+  width: 100px;
+}
+
+.total-row {
+  border-top: 2px solid #667eea;
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.total-row td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+/* Color coding for costs */
+.cost-negative {
+  color: #e53e3e !important;
+}
+
+.cost-total {
+  background-color: #fed7d7 !important;
+  border-top: 2px solid #e53e3e !important;
+}
+
+/* Import select styling */
+.import-select {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.875em;
+}
+
+.import-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.no-materials {
+  text-align: center;
+  padding: 20px;
+  color: #718096;
+  font-style: italic;
+}
+
+.no-price {
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.price-data-note {
+  margin-top: 15px;
+  padding: 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 0.9em;
+}
+
+.price-data-note p {
+  margin: 0;
+}

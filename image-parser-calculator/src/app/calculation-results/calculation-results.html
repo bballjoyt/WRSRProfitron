@@ -1,0 +1,118 @@
+<div class="results-container">
+  <h2>Calculation Results</h2>
+
+  <div class="data-list">
+    <div *ngIf="allData.length === 0" class="no-data">
+      No processed images found. Upload an image to get started.
+    </div>
+
+    <div *ngFor="let item of allData" class="data-item">
+      <div class="item-header">
+        <h3>{{ item.filename }}</h3>
+        <span class="timestamp">{{ item.timestamp | date:'medium' }}</span>
+      </div>
+
+      <div class="extracted-text">
+        <h4>Extracted Text:</h4>
+        <p>{{ item.extractedText }}</p>
+      </div>
+
+      <!-- Prices Data Section (only for Prices files) -->
+      <div *ngIf="isPricesFile(item)" class="prices-section">
+        <h4>Prices Data:</h4>
+        <div class="prices-summary">
+          <p><strong>Resources Found:</strong> {{ item.pricesData.totalResources }}</p>
+          <div class="resource-preview" *ngIf="item.pricesData.resources.length > 0">
+            <h5>Sample Resources:</h5>
+            <div class="resource-item" *ngFor="let resource of item.pricesData.resources.slice(0, 3)">
+              <span class="resource-name">{{ resource.name }}:</span>
+              NATO ({{ resource.prices.natoSell }}/{{ resource.prices.natoBuy }})
+              USSR ({{ resource.prices.ussrSell }}/{{ resource.prices.ussrBuy }})
+            </div>
+            <p *ngIf="item.pricesData.resources.length > 3">...and {{ item.pricesData.resources.length - 3 }} more</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Industry Data Section (only for non-Prices files) -->
+      <div *ngIf="isIndustryFile(item)" class="industry-section">
+        <h4>Industry Data:</h4>
+        <div class="industry-summary">
+          <p><strong>Industry Name:</strong> {{ item.industryData.userDefinedName }}</p>
+          <p><strong>Buildings Found:</strong> {{ item.industryData.totalBuildings }}</p>
+          <div class="buildings-preview" *ngIf="item.industryData.buildings.length > 0">
+            <h5>Sample Buildings:</h5>
+            <div class="building-item" *ngFor="let building of item.industryData.buildings.slice(0, 3)">
+              <div class="building-header">
+                <span class="building-name">{{ building.name }}</span>
+                <span *ngIf="building.pollution?.level" class="pollution-info">(Pollution: {{ building.pollution.level }})</span>
+              </div>
+              <div class="building-details">
+                <span *ngIf="building.production?.outputs?.length" class="produces">Produces: {{ getOutputNames(building) }}</span>
+                <span *ngIf="building.consumption?.inputs?.length" class="consumes">Consumes: {{ getInputNames(building) }}</span>
+              </div>
+            </div>
+            <p *ngIf="item.industryData.buildings.length > 3">...and {{ item.industryData.buildings.length - 3 }} more buildings</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="calculations-section">
+        <h4>Calculations:</h4>
+        <div *ngIf="!item.calculations" class="calculate-controls">
+          <button (click)="performCalculations(item)" class="calculate-btn">
+            Perform Calculations
+          </button>
+        </div>
+
+        <div *ngIf="item.calculations" class="calculation-results">
+          <div class="calc-result">
+            <strong>Numbers Found:</strong>
+            <span class="numbers">{{ item.calculations.numbers.join(', ') }}</span>
+          </div>
+
+          <div class="calc-result" *ngIf="item.calculations.sum !== undefined">
+            <strong>Sum:</strong> {{ item.calculations.sum }}
+          </div>
+
+          <div class="calc-result" *ngIf="item.calculations.average !== undefined">
+            <strong>Average:</strong> {{ item.calculations.average | number:'1.2-2' }}
+          </div>
+
+          <div class="calc-result" *ngIf="item.calculations.min !== undefined">
+            <strong>Min:</strong> {{ item.calculations.min }}
+          </div>
+
+          <div class="calc-result" *ngIf="item.calculations.max !== undefined">
+            <strong>Max:</strong> {{ item.calculations.max }}
+          </div>
+
+          <div class="calc-result" *ngIf="item.calculations.count !== undefined">
+            <strong>Count:</strong> {{ item.calculations.count }}
+          </div>
+        </div>
+      </div>
+
+      <div class="item-actions">
+        <button *ngIf="isPricesFile(item)"
+                (click)="importToPricesDatabase(item)"
+                class="import-btn">
+          Import to Prices Database
+        </button>
+        <button *ngIf="isIndustryFile(item)"
+                (click)="importToIndustryDatabase(item)"
+                class="import-btn industry-import">
+          Import to Industry Database
+        </button>
+        <button (click)="deleteItem(item.id)" class="delete-btn">Delete</button>
+        <button (click)="exportItem(item)" class="export-btn">Export JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="global-actions" *ngIf="allData.length > 0">
+    <button (click)="exportAllData()" class="export-all-btn">Export All Data</button>
+    <button (click)="clearAllData()" class="clear-all-btn"
+            (click)="$event.stopPropagation()">Clear All Data</button>
+  </div>
+</div>

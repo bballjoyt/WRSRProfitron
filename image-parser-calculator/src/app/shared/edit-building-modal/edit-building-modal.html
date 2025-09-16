@@ -1,0 +1,145 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="onOverlayClick($event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Edit Building: {{ editedBuilding.name }}</h2>
+      <button class="close-btn" (click)="onCancel()">&times;</button>
+    </div>
+
+    <div class="modal-body" *ngIf="editedBuilding">
+      <!-- Basic Building Info -->
+      <div class="section">
+        <h3>Basic Information</h3>
+        <div class="form-row">
+          <label>Building Name:</label>
+          <input type="text" [(ngModel)]="editedBuilding.name" class="form-input">
+        </div>
+        <div class="form-row">
+          <label>Max Workers:</label>
+          <input type="number" [(ngModel)]="editedBuilding.maxWorkers" class="form-input">
+        </div>
+        <div class="form-row">
+          <label>Pollution Level:</label>
+          <input type="number" step="0.1" [(ngModel)]="editedBuilding.pollution.level" class="form-input">
+        </div>
+      </div>
+
+      <!-- Construction Materials -->
+      <div class="section">
+        <h3>Construction Materials
+          <button type="button" class="add-btn" (click)="addConstructionMaterial()">+ Add</button>
+        </h3>
+        <div class="table-container">
+          <table class="edit-table">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Quantity</th>
+                <th>Source</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let material of editedBuilding.constructionCost.materials; let i = index">
+                <td><input type="text" [(ngModel)]="material.name" class="table-input"></td>
+                <td><input type="number" step="0.01" [(ngModel)]="material.quantity" class="table-input"></td>
+                <td>
+                  <select [(ngModel)]="material.importSource" class="table-select">
+                    <option *ngFor="let option of importSourceOptions" [value]="option">{{ option }}</option>
+                  </select>
+                </td>
+                <td><button type="button" class="remove-btn" (click)="removeConstructionMaterial(i)">Remove</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Input Resources -->
+      <div class="section">
+        <h3>Input Resources
+          <button type="button" class="add-btn" (click)="addInput()">+ Add</button>
+        </h3>
+        <div class="table-container">
+          <table class="edit-table">
+            <thead>
+              <tr>
+                <th>Resource</th>
+                <th>Quantity</th>
+                <th>Source</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let input of editedBuilding.consumption.inputs; let i = index">
+                <td><input type="text" [(ngModel)]="input.name" class="table-input"></td>
+                <td><input type="number" step="0.01" [(ngModel)]="input.quantity" class="table-input"></td>
+                <td>
+                  <select [(ngModel)]="input.importSource" class="table-select">
+                    <option *ngFor="let option of importSourceOptions" [value]="option">{{ option }}</option>
+                  </select>
+                </td>
+                <td><button type="button" class="remove-btn" (click)="removeInput(i)">Remove</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Output Resources -->
+      <div class="section">
+        <h3>Output Resources
+          <button type="button" class="add-btn" (click)="addOutput()">+ Add</button>
+        </h3>
+        <div class="table-container">
+          <table class="edit-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Target</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let output of editedBuilding.production.outputs; let i = index">
+                <td><input type="text" [(ngModel)]="output.name" class="table-input"></td>
+                <td><input type="number" step="0.01" [(ngModel)]="output.quantity" class="table-input"></td>
+                <td>
+                  <select [(ngModel)]="output.exportTarget" class="table-select">
+                    <option *ngFor="let option of exportTargetOptions" [value]="option">{{ option }}</option>
+                  </select>
+                </td>
+                <td><button type="button" class="remove-btn" (click)="removeOutput(i)">Remove</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Production Info -->
+      <div class="section">
+        <h3>Production Information</h3>
+        <div class="form-row">
+          <label>Max Per Day:</label>
+          <input type="number" step="0.01" [(ngModel)]="editedBuilding.production.maxPerDay" class="form-input">
+        </div>
+        <div class="form-row">
+          <label>Max Per Building:</label>
+          <input type="number" step="0.01" [(ngModel)]="editedBuilding.production.maxPerBuilding" class="form-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="resetToOriginalValues()">
+        Reset to Original
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onSave()">
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>

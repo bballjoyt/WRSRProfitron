@@ -1,0 +1,148 @@
+<div class="resource-details-container">
+  <h4>Resource Details</h4>
+
+  <!-- Worker Information -->
+  <div class="worker-info">
+    <div class="worker-stats">
+      <span class="worker-label">Max Workers:</span>
+      <span class="worker-value">{{ building.maxWorkers || 1 }}</span>
+
+      <span class="worker-label" style="margin-left: 20px;">Current Workers:</span>
+      <span class="worker-value" *ngIf="!showWorkerControls">{{ currentWorkers }}</span>
+      <input
+        *ngIf="showWorkerControls"
+        type="number"
+        [value]="currentWorkers"
+        (input)="onCurrentWorkersChange($event.target.value || '0')"
+        min="0"
+        [max]="building.maxWorkers || 1"
+        class="worker-input">
+
+      <span class="worker-label" style="margin-left: 20px;">Productivity:</span>
+      <span class="worker-value" *ngIf="!showWorkerControls">{{ workerProductivity }}%</span>
+      <input
+        *ngIf="showWorkerControls"
+        type="number"
+        [value]="workerProductivity"
+        (input)="onWorkerProductivityChange($event.target.value || '100')"
+        min="30"
+        max="120"
+        step="1"
+        class="worker-input">
+
+      <span class="worker-label" style="margin-left: 20px;">Efficiency:</span>
+      <span class="worker-value">{{ (getWorkerRatio() * 100) | number:'1.1-1' }}%</span>
+    </div>
+  </div>
+
+  <!-- Input Resources -->
+  <table class="detail-table aligned-table">
+    <thead>
+      <tr>
+        <th class="expand-spacer"></th>
+        <th class="resource-col">Resource</th>
+        <th class="source-col" *ngIf="showSourceControls">Source</th>
+        <th class="quantity-col">Daily Quantity</th>
+        <th class="buy-ussr-col currency">Price USSR</th>
+        <th class="cost-ussr-col currency">USSR Total</th>
+        <th class="buy-nato-col currency">Price NATO</th>
+        <th class="cost-nato-col currency">NATO Total</th>
+        <th class="actions-spacer"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Input Resources -->
+      <tr *ngFor="let input of building.consumption.inputs; let i = index">
+        <td class="expand-spacer"></td>
+        <td class="resource-col">{{ input.name }}</td>
+        <td class="source-col" *ngIf="showSourceControls">
+          <select
+            [(ngModel)]="input.importSource"
+            (change)="onImportSourceChange(i, input.importSource)"
+            class="import-select">
+            <option value="own">Own</option>
+            <option value="importNATO">NATO</option>
+            <option value="importUSSR">USSR</option>
+          </select>
+        </td>
+        <td class="quantity-col">{{ getScaledQuantity(input.quantity) | number:'1.0-2' }}</td>
+        <td class="buy-ussr-col currency">₽ {{ getBuyPriceUSSR(input) | number:'1.2-2' }}</td>
+        <td class="cost-ussr-col currency cost-negative">₽ {{ getInputCostUSSR(input) | number:'1.2-2' }}</td>
+        <td class="buy-nato-col currency">$ {{ getBuyPriceNATO(input) | number:'1.2-2' }}</td>
+        <td class="cost-nato-col currency cost-negative">$ {{ getInputCostNATO(input) | number:'1.2-2' }}</td>
+        <td class="actions-spacer"></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total-row cost-total">
+        <td class="expand-spacer"></td>
+        <td class="resource-col"><strong>Input Total</strong></td>
+        <td class="source-col" *ngIf="showSourceControls"></td>
+        <td class="quantity-col"></td>
+        <td class="buy-ussr-col"></td>
+        <td class="cost-ussr-col currency"><strong>₽ {{ getDailyImportCostUSSR() | number:'1.2-2' }}</strong></td>
+        <td class="buy-nato-col"></td>
+        <td class="cost-nato-col currency"><strong>$ {{ getDailyImportCostNATO() | number:'1.2-2' }}</strong></td>
+        <td class="actions-spacer"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- Output Resources -->
+  <table class="detail-table aligned-table output-table">
+    <thead>
+      <tr>
+        <th class="expand-spacer"></th>
+        <th class="resource-col">Output Product</th>
+        <th class="source-col" *ngIf="showSourceControls">Source</th>
+        <th class="quantity-col">Daily Quantity</th>
+        <th class="buy-ussr-col currency">Price USSR</th>
+        <th class="cost-ussr-col currency">USSR Total</th>
+        <th class="buy-nato-col currency">Price NATO</th>
+        <th class="cost-nato-col currency">NATO Total</th>
+        <th class="actions-spacer"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let output of building.production.outputs; let i = index">
+        <td class="expand-spacer"></td>
+        <td class="resource-col">{{ output.name }}</td>
+        <td class="source-col" *ngIf="showSourceControls"></td>
+        <td class="quantity-col">{{ getScaledQuantity(output.quantity) | number:'1.0-2' }}</td>
+        <td class="buy-ussr-col currency">₽ {{ getSellPriceUSSR(output) | number:'1.2-2' }}</td>
+        <td class="cost-ussr-col currency profit-positive">₽ {{ getOutputRevenueUSSR(output) | number:'1.2-2' }}</td>
+        <td class="buy-nato-col currency">$ {{ getSellPriceNATO(output) | number:'1.2-2' }}</td>
+        <td class="cost-nato-col currency profit-positive">$ {{ getOutputRevenueNATO(output) | number:'1.2-2' }}</td>
+        <td class="actions-spacer"></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total-row profit-total">
+        <td class="expand-spacer"></td>
+        <td class="resource-col"><strong>Output Total</strong></td>
+        <td class="source-col" *ngIf="showSourceControls"></td>
+        <td class="quantity-col"></td>
+        <td class="buy-ussr-col"></td>
+        <td class="cost-ussr-col currency"><strong>₽ {{ getDailyRevenueUSSR() | number:'1.2-2' }}</strong></td>
+        <td class="buy-nato-col"></td>
+        <td class="cost-nato-col currency"><strong>$ {{ getDailyRevenueNATO() | number:'1.2-2' }}</strong></td>
+        <td class="actions-spacer"></td>
+      </tr>
+      <tr class="total-row net-profit-total">
+        <td class="expand-spacer"></td>
+        <td class="resource-col"><strong>Net Profit</strong></td>
+        <td class="source-col" *ngIf="showSourceControls"></td>
+        <td class="quantity-col"></td>
+        <td class="buy-ussr-col"></td>
+        <td class="cost-ussr-col currency" [class.profit-positive]="getNetProfitUSSR() > 0" [class.cost-negative]="getNetProfitUSSR() < 0">
+          <strong>₽ {{ getNetProfitUSSR() | number:'1.2-2' }}</strong>
+        </td>
+        <td class="buy-nato-col"></td>
+        <td class="cost-nato-col currency" [class.profit-positive]="getNetProfitNATO() > 0" [class.cost-negative]="getNetProfitNATO() < 0">
+          <strong>$ {{ getNetProfitNATO() | number:'1.2-2' }}</strong>
+        </td>
+        <td class="actions-spacer"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>

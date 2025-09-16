@@ -1,0 +1,162 @@
+<div class="industry-manager-container">
+  <h2>Industry Manager</h2>
+
+  <div class="summary-section">
+    <div class="summary-card">
+      <h3>Industry Statistics</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Total Datasets:</span>
+          <span class="stat-value">{{ datasets.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Buildings:</span>
+          <span class="stat-value">{{ getTotalBuildings() }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-controls">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Search industries or buildings..."
+        class="search-input"
+      >
+
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="industry-table-container">
+      <table class="industry-table">
+        <thead>
+          <tr>
+            <th class="expand-col"></th>
+            <th class="sortable" (click)="sortBy('dataset')">
+              Dataset
+              <span class="sort-indicator" *ngIf="sortField === 'dataset'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable" (click)="sortBy('building')">
+              Building
+              <span class="sort-indicator" *ngIf="sortField === 'building'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable" (click)="sortBy('maxWorkers')">
+              Max Workers
+              <span class="sort-indicator" *ngIf="sortField === 'maxWorkers'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable currency" (click)="sortBy('dailyCostUSSR')">
+              Daily Cost USSR
+              <span class="sort-indicator" *ngIf="sortField === 'dailyCostUSSR'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable currency" (click)="sortBy('dailyProfitUSSR')">
+              Daily Profit USSR
+              <span class="sort-indicator" *ngIf="sortField === 'dailyProfitUSSR'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable currency" (click)="sortBy('profitPerWorkerUSSR')">
+              Profit/Worker USSR
+              <span class="sort-indicator" *ngIf="sortField === 'profitPerWorkerUSSR'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable currency" (click)="sortBy('dailyCostNATO')">
+              Daily Cost NATO
+              <span class="sort-indicator" *ngIf="sortField === 'dailyCostNATO'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable currency" (click)="sortBy('dailyProfitNATO')">
+              Daily Profit NATO
+              <span class="sort-indicator" *ngIf="sortField === 'dailyProfitNATO'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="sortable currency" (click)="sortBy('profitPerWorkerNATO')">
+              Profit/Worker NATO
+              <span class="sort-indicator" *ngIf="sortField === 'profitPerWorkerNATO'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let dataset of filteredDatasets">
+            <ng-container *ngFor="let building of dataset.buildings">
+              <!-- Main Row -->
+              <tr class="main-row">
+                <td class="expand-cell">
+                  <button
+                    class="expand-btn"
+                    (click)="toggleRowExpansion(dataset.userDefinedName, building.name)"
+                    [title]="isRowExpanded(dataset.userDefinedName, building.name) ? 'Collapse' : 'Expand'">
+                    {{ isRowExpanded(dataset.userDefinedName, building.name) ? '▼' : '►' }}
+                  </button>
+                </td>
+                <td>{{ dataset.userDefinedName }}</td>
+                <td>{{ building.name }}</td>
+                <td>{{ building.maxWorkers || 1 }}</td>
+                <td class="currency">₽ {{ getFullDailyImportCostUSSR(building) | number:'1.2-2' }}</td>
+                <td class="currency" [class.profit]="getDailyProfitUSSR(building) > 0" [class.loss]="getDailyProfitUSSR(building) < 0">
+                  ₽ {{ getDailyProfitUSSR(building) | number:'1.2-2' }}
+                </td>
+                <td class="currency">₽ {{ getProfitPerWorkerUSSR(building) | number:'1.2-2' }}</td>
+                <td class="currency">$ {{ getFullDailyImportCostNATO(building) | number:'1.2-2' }}</td>
+                <td class="currency" [class.profit]="getDailyProfitNATO(building) > 0" [class.loss]="getDailyProfitNATO(building) < 0">
+                  $ {{ getDailyProfitNATO(building) | number:'1.2-2' }}
+                </td>
+                <td class="currency">$ {{ getProfitPerWorkerNATO(building) | number:'1.2-2' }}</td>
+                <td class="actions-cell">
+                  <button class="action-btn view-btn" (click)="showBuildingDetails(building)" title="View Details">👁️</button>
+                  <button class="action-btn delete-btn" (click)="deleteBuilding(building.name)" title="Delete">🗑️</button>
+                </td>
+              </tr>
+
+              <!-- Expanded Row -->
+              <tr class="expanded-row" *ngIf="isRowExpanded(dataset.userDefinedName, building.name)">
+                <td colspan="11" class="expanded-content">
+                  <div class="detail-section">
+                    <app-resource-details
+                      [building]="building"
+                      [currentWorkers]="getBuildingWorkerState(building).currentWorkers"
+                      [workerProductivity]="getBuildingWorkerState(building).workerProductivity"
+                      [showSourceControls]="true"
+                      [showWorkerControls]="true"
+                      (importSourceChanged)="onResourceDetailsChange(building, $event)"
+                      (exportTargetChanged)="onResourceDetailsChange(building, $event)"
+                      (currentWorkersChanged)="onCurrentWorkersChange(building, $event)"
+                      (workerProductivityChanged)="onWorkerProductivityChange(building, $event)">
+                    </app-resource-details>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </ng-container>
+        </tbody>
+      </table>
+
+      <div class="no-data" *ngIf="filteredDatasets.length === 0">
+        <p *ngIf="searchTerm">No industries found matching "{{ searchTerm }}"</p>
+        <p *ngIf="!searchTerm">No industry data available. Upload industry images to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="global-actions">
+    <button (click)="exportData()" class="export-btn">Export Industry Data</button>
+    <button (click)="clearAllData()" class="clear-all-btn">Clear All Data</button>
+  </div>
+</div>

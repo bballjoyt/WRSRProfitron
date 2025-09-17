@@ -19,7 +19,8 @@
       "Bash(npm uninstall:*)",
       "Bash(ng build)",
       "Bash(ng generate component:*)",
-      "WebFetch(domain:www.sovietrepublic.net)"
+      "WebFetch(domain:www.sovietrepublic.net)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

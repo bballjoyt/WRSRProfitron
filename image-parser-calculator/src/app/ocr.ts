@@ -338,6 +338,19 @@ export class OcrService {
       }
 
       if (inBuildingSection && line) {
+        // Handle workdays pattern first: "2712 Workdays"
+        const workdaysMatch = line.match(/(\d+(?:\.\d+)?)\s+workdays/i);
+        if (workdaysMatch) {
+          const quantity = parseFloat(workdaysMatch[1]);
+          if (!materials.find(m => m.name === 'Workdays')) {
+            materials.push({
+              name: 'Workdays',
+              quantity: quantity,
+              importSource: 'own' as ImportSource
+            });
+          }
+        }
+
         // Process the line for construction materials only
         // Handle patterns like: "| 2712 Workdays & 246t of Concrete"
         // and: "62t of Gravel 50t of Asphalt"
@@ -345,13 +358,32 @@ export class OcrService {
         // Remove leading special characters but preserve numbers for workdays
         let cleanLine = line.replace(/^[|p\s]*/, '').trim();
 
-        // Split on & first
-        const parts = cleanLine.split('&');
-        for (const part of parts) {
-          const trimmedPart = part.trim();
-          if (trimmedPart) {
-            // Try to extract materials from this part
-            this.extractMaterialsFromLine(trimmedPart, materials);
+        // Split on & or > and process each part - but skip parts that contain "workdays" since we already handled it
+        // Skip this parsing if the line contains multiple "t of" patterns (handled by multi-material regex below)
+        if (!line.match(/\d+(?:\.\d+)?t\s+of\s+.+?\s+\d+(?:\.\d+)?t\s+of/)) {
+          const parts = cleanLine.split(/[&>]/);
+          for (const part of parts) {
+            const trimmedPart = part.trim();
+            // Skip parts that contain workdays since we already handled them
+            if (trimmedPart.toLowerCase().includes('workdays')) continue;
+
+            if (trimmedPart) {
+              // Try to extract materials from this part
+              this.extractMaterialsFromLine(trimmedPart, materials);
+            }
+          }
+        }
+
+        // Also try to parse multiple materials in same line (space separated)
+        // Match patterns like "62t of Gravel 50t of Asphalt" and "31t of Boards 0.062t of Mechanic comp."
+        const multiMatches = [...line.matchAll(/(\d+(?:\.\d+)?)\s*t\s+of\s+([a-zA-Z\s\.]+?)(?=\s*(?:\d+(?:\.\d+)?t|\s*$))/gi)];
+        if (multiMatches.length > 0) {
+          for (const match of multiMatches) {
+            const fullMatch = match[0]; // Full matched string like "31t of Boards"
+            const material = this.parseMaterialLine(fullMatch);
+            if (material && material.name !== 'Workdays' && !materials.find(m => m.name === material.name)) {
+              materials.push(material);
+            }
           }
         }
       }
@@ -361,6 +393,19 @@ export class OcrService {
   }
 
   private extractMaterialsFromLine(line: string, materials: ResourceRequirement[]): void {
+    // Handle workdays pattern first: "2712 Workdays"
+    const workdaysMatch = line.match(/(\d+(?:\.\d+)?)\s+workdays/i);
+    if (workdaysMatch) {
+      const quantity = parseFloat(workdaysMatch[1]);
+      if (!materials.find(m => m.name === 'Workdays')) {
+        materials.push({
+          name: 'Workdays',
+          quantity: quantity,
+          importSource: 'own' as ImportSource
+        });
+      }
+    }
+
     // Handle multiple materials in one line like "62t of Gravel 50t of Asphalt"
     // First try to match all "Xt of Material" patterns
     const materialMatches = line.match(/(\d+(?:\.\d+)?)\s*t\s+of\s+([^0-9]+?)(?=\s+\d+|$)/gi);
@@ -374,10 +419,12 @@ export class OcrService {
       return;
     }
 
-    // Then try single material patterns
-    const singleMaterial = this.parseMaterialLine(line);
-    if (singleMaterial && !materials.find(m => m.name === singleMaterial.name)) {
-      materials.push(singleMaterial);
+    // Then try single material patterns (but not if we already handled workdays)
+    if (!workdaysMatch) {
+      const singleMaterial = this.parseMaterialLine(line);
+      if (singleMaterial && !materials.find(m => m.name === singleMaterial.name)) {
+        materials.push(singleMaterial);
+      }
     }
   }
 
@@ -405,11 +452,26 @@ export class OcrService {
       }
 
       if (inProductionSection && line) {
-        // Look for patterns like "§ 1.1t of Explosives" or "4 K 5.0t of Fabric"
-        const productionMatch = line.match(/[§4K@BI]*\s*(\d+(?:\.\d+)?)\s*t?\s*of\s+(\w+)/i);
+        // Look for patterns like "§ 1.1t of Explosives", "4 K 5.0t of Fabric", "BI 1.2t of Clothes"
+        const productionMatch = line.match(/[§4K@BI]*\s*(\d+(?:\.\d+)?)(?:\.(\d+))?\s*t?\s*of\s+(\w+)/i);
         if (productionMatch) {
-          const quantity = parseFloat(productionMatch[1]);
-          const productName = productionMatch[2];
+          let quantity = parseFloat(productionMatch[1]);
+
+          // Handle cases where decimal is separated by space or 't' like "12t of" vs "1.2t of"
+          if (productionMatch[2]) {
+            quantity = parseFloat(productionMatch[1] + '.' + productionMatch[2]);
+          }
+
+          // Special handling for likely decimal cases - if number > 10 and no decimal, might be missing decimal
+          if (quantity >= 10 && !productionMatch[1].includes('.')) {
+            // Check if this looks like it should be a decimal (common for clothing: 12 -> 1.2)
+            const productName = productionMatch[3] || productionMatch[2];
+            if (productName && productName.toLowerCase().includes('cloth')) {
+              quantity = quantity / 10; // 12 -> 1.2
+            }
+          }
+
+          const productName = productionMatch[3] || productionMatch[2];
 
           outputs.push({
             name: productName,
@@ -449,30 +511,28 @@ export class OcrService {
       }
 
       if (inConsumptionSection && line &&
-          !line.toLowerCase().includes('power') &&
-          !line.toLowerCase().includes('water') &&
-          !line.toLowerCase().includes('mwh') &&
           !line.toLowerCase().includes('required water quality')) {
 
         // Parse multiple materials from one line like "AE 0.75t of Chemicals 5] 2.3t of Gravel"
         // or "20t of Crops y 0.50t of Chemicals"
         // or "$ 37t of Crops é 7.5m? of Water"
-        const consumptionMatches = line.match(/(\d+(?:\.\d+)?)\s*t\s*of\s+(\w+)/gi);
-        if (consumptionMatches) {
+        // Enhanced to catch water with m³ units: "11m? of Water", "7.5m? of Water"
+        const consumptionMatches = [...line.matchAll(/(\d+(?:\.\d+)?)\s*[tm][³\?\w]*\s*(?:of\s+)?(\w+)/gi)];
+        if (consumptionMatches.length > 0) {
           for (const match of consumptionMatches) {
-            const consumptionMatch = match.match(/(\d+(?:\.\d+)?)\s*t\s*of\s+(\w+)/i);
-            if (consumptionMatch) {
-              const quantity = parseFloat(consumptionMatch[1]);
-              const inputName = consumptionMatch[2];
+            const quantity = parseFloat(match[1]);
+            const inputName = match[2];
 
-              // Avoid duplicates
-              if (!inputs.find(inp => inp.name === inputName)) {
-                inputs.push({
-                  name: inputName,
-                  quantity: quantity,
-                  importSource: 'importUSSR' as ImportSource
-                });
-              }
+            // Skip power entries
+            if (inputName.toLowerCase() === 'power') continue;
+
+            // Avoid duplicates
+            if (!inputs.find(inp => inp.name === inputName)) {
+              inputs.push({
+                name: inputName,
+                quantity: quantity,
+                importSource: 'importUSSR' as ImportSource
+              });
             }
           }
         }
@@ -508,15 +568,13 @@ export class OcrService {
     const lines = text.split('\n').filter(line => line.trim());
 
     console.log('=== EXTRACTING MAX WORKERS ===');
-    console.log('Full OCR Text:', text);
-    console.log('OCR Text lines:', lines);
 
-    // First, let's look for the exact pattern you mentioned: "Ure number of workers: 1 ° I 75"
+    // First, look for the exact pattern like "Ure number of workers: 1 ° I 75"
     const fullTextPattern = /ure number of workers:?\s*\d+\s*[°º]*\s*I\s*(\d+)/i;
     const fullTextMatch = text.match(fullTextPattern);
     if (fullTextMatch) {
       const workers = parseInt(fullTextMatch[1]);
-      console.log(`✅ Found maxWorkers using full text pattern: ${workers} from match: "${fullTextMatch[0]}"`);
+      console.log(`✅ Found maxWorkers using full text pattern: ${workers}`);
       return workers;
     }
 
@@ -529,11 +587,8 @@ export class OcrService {
         'maximum number of workers',
         'max workers',
         'maximum workers',
-        'workers:',
-        'max number of workers',
         'ure number of workers',  // Handle OCR corruption like "Ure number of workers"
-        'number of workers',      // More general pattern
-        'workers'                 // Even more general
+        'number of workers'       // More general pattern
       ];
 
       const lineToCheck = line.toLowerCase();
@@ -553,53 +608,35 @@ export class OcrService {
         const specialMatch = line.match(/(\d+)\s*[°º]*\s*I\s*(\d+)/);
         if (specialMatch) {
           const workers = parseInt(specialMatch[2]); // Take the second number
-          console.log(`✅ Extracted maxWorkers using special pattern (°I): ${workers} from line: "${line}"`);
+          console.log(`✅ Extracted maxWorkers using special pattern (°I): ${workers}`);
           return workers;
         }
 
-        // Look for all numbers in the current line and take the largest one (likely the actual worker count)
-        const allNumbers = line.match(/\d+/g);
-        if (allNumbers && allNumbers.length > 0) {
-          const numbers = allNumbers.map(n => parseInt(n));
-          const maxNumber = Math.max(...numbers);
-          console.log(`🔢 Found numbers in current line: [${numbers.join(', ')}], max: ${maxNumber}`);
+        // Look for number in next line - handle patterns like "i 100", "O 80", "o 150"
+        // Also check multiple lines ahead since the number might be separated by "°" character
+        for (let j = 1; j <= 3; j++) {
+          if (i + j < lines.length) {
+            const nextLine = lines[i + j].trim();
+            console.log(`🔍 Checking line +${j} for numbers: "${nextLine}"`);
 
-          // If max number is reasonable for worker count (> 1), use it
-          if (maxNumber > 1) {
-            console.log(`✅ Extracted maxWorkers from current line: ${maxNumber}`);
-            return maxNumber;
-          }
-        }
+            // Check for special characters followed by numbers (like "i 100", "O 80", "o 150")
+            const nextSpecialMatch = nextLine.match(/[°ºIOio]\s*(\d+)/);
+            if (nextSpecialMatch) {
+              const workers = parseInt(nextSpecialMatch[1]);
+              console.log(`✅ Extracted maxWorkers from line +${j} using special pattern: ${workers}`);
+              return workers;
+            }
 
-        // Look for number in next line
-        if (i + 1 < lines.length) {
-          const nextLine = lines[i + 1].trim();
-          console.log(`🔍 Checking next line for numbers: "${nextLine}"`);
-
-          // Check for special characters followed by numbers (like "I 75")
-          const nextSpecialMatch = nextLine.match(/[°ºI]\s*(\d+)/);
-          if (nextSpecialMatch) {
-            const workers = parseInt(nextSpecialMatch[1]);
-            console.log(`✅ Extracted maxWorkers from next line using special pattern: ${workers}`);
-            return workers;
-          }
-
-          const nextWorkerMatch = nextLine.match(/(\d+)/);
-          if (nextWorkerMatch) {
-            const workers = parseInt(nextWorkerMatch[1]);
-            console.log(`✅ Extracted maxWorkers from next line: ${workers}`);
-            return workers;
-          }
-        }
-
-        // Look for number in previous line too
-        if (i > 0) {
-          const prevLine = lines[i - 1].trim();
-          const prevWorkerMatch = prevLine.match(/(\d+)/);
-          if (prevWorkerMatch) {
-            const workers = parseInt(prevWorkerMatch[1]);
-            console.log(`✅ Extracted maxWorkers from previous line: ${workers}`);
-            return workers;
+            // Check for just numbers in the line
+            const nextWorkerMatch = nextLine.match(/^\s*(\d+)\s*$/);
+            if (nextWorkerMatch) {
+              const workers = parseInt(nextWorkerMatch[1]);
+              // Ensure it's a reasonable worker count (not some other random number)
+              if (workers >= 10 && workers <= 1000) {
+                console.log(`✅ Extracted maxWorkers from line +${j}: ${workers}`);
+                return workers;
+              }
+            }
           }
         }
       }

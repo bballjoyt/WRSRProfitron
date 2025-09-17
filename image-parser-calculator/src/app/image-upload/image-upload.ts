@@ -22,6 +22,7 @@ export class ImageUpload {
 
   @Output() dataProcessed = new EventEmitter<void>();
 
+  selectedFiles: File[] = [];
   selectedFile: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
   isProcessing = false;
@@ -37,10 +38,22 @@ export class ImageUpload {
   pricesDatasetName = '';
   pricesData: any = null;
 
+  // Multi-file processing state
+  showBatchDialog = false;
+  batchProgress = { current: 0, total: 0, currentFile: '' };
+  batchResults: any[] = [];
+  duplicates: any[] = [];
+  showDuplicateDialog = false;
+
   onFileSelect(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.processSelectedFile(file);
+    const files = Array.from(event.target.files as FileList);
+    if (files.length === 1) {
+      // Single file - use existing flow
+      this.processSelectedFile(files[0]);
+    } else if (files.length > 1) {
+      // Multiple files - use batch processing
+      this.selectedFiles = files;
+      this.startBatchProcessing();
     }
   }
 
@@ -76,9 +89,17 @@ export class ImageUpload {
 
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      if (file.type.startsWith('image/')) {
-        this.processSelectedFile(file);
+      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+      if (imageFiles.length === 1) {
+        // Single file - use existing flow
+        this.processSelectedFile(imageFiles[0]);
+      } else if (imageFiles.length > 1) {
+        // Multiple files - use batch processing
+        this.selectedFiles = imageFiles;
+        this.startBatchProcessing();
+      } else if (imageFiles.length === 0) {
+        alert('Please drop only image files.');
       }
     }
   }
@@ -357,6 +378,7 @@ export class ImageUpload {
   resetToFreshUpload(): void {
     // Clear all form data and state
     this.selectedFile = null;
+    this.selectedFiles = [];
     this.imagePreview = null;
     this.extractedData = null;
     this.selectedDataType = 'industry';
@@ -372,5 +394,192 @@ export class ImageUpload {
     this.industryData = null;
     this.pricesData = null;
     this.nameConflictAction = null;
+
+    // Clear batch processing states
+    this.showBatchDialog = false;
+    this.batchProgress = { current: 0, total: 0, currentFile: '' };
+    this.batchResults = [];
+    this.duplicates = [];
+    this.showDuplicateDialog = false;
+  }
+
+  async startBatchProcessing(): Promise<void> {
+    if (this.selectedFiles.length === 0) return;
+
+    this.batchProgress = {
+      current: 0,
+      total: this.selectedFiles.length,
+      currentFile: ''
+    };
+    this.batchResults = [];
+    this.duplicates = [];
+    this.showBatchDialog = true;
+    this.isProcessing = true;
+
+    try {
+      for (let i = 0; i < this.selectedFiles.length; i++) {
+        const file = this.selectedFiles[i];
+        this.batchProgress.current = i + 1;
+        this.batchProgress.currentFile = file.name;
+
+        await this.processBatchFile(file);
+      }
+
+      // Check for duplicates after processing all files
+      await this.checkForDuplicates();
+
+    } catch (error) {
+      console.error('Error in batch processing:', error);
+      alert('Error occurred during batch processing. Some files may not have been processed.');
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  private async processBatchFile(file: File): Promise<void> {
+    try {
+      if (this.selectedDataType === 'prices') {
+        const pricesData = await this.ocrService.extractPricesData(file);
+        if (pricesData) {
+          // Use filename as default name (remove extension)
+          const defaultName = file.name.replace(/\.[^/.]+$/, '');
+          pricesData.filename = defaultName;
+          this.batchResults.push({
+            type: 'prices',
+            file: file,
+            data: pricesData,
+            defaultName: defaultName
+          });
+        }
+      } else {
+        const industryData = await this.ocrService.extractIndustryData(file);
+        if (industryData) {
+          // Use first building name as default industry name
+          const defaultName = industryData.buildings && industryData.buildings.length > 0
+            ? industryData.buildings[0].name
+            : file.name.replace(/\.[^/.]+$/, '');
+          industryData.userDefinedName = defaultName;
+          this.batchResults.push({
+            type: 'industry',
+            file: file,
+            data: industryData,
+            defaultName: defaultName
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing file ${file.name}:`, error);
+      // Continue with next file even if this one fails
+    }
+  }
+
+  private async checkForDuplicates(): Promise<void> {
+    this.duplicates = [];
+
+    for (const result of this.batchResults) {
+      let isDuplicate = false;
+
+      if (result.type === 'prices') {
+        // Check if prices dataset with this name already exists
+        const allPricesDatasets = this.pricesService.getAllDatasets();
+        const existingPrices = allPricesDatasets.find(ds => ds.filename === result.defaultName);
+        if (existingPrices) {
+          isDuplicate = true;
+        }
+      } else if (result.type === 'industry') {
+        // Check if industry with this name already exists
+        const existingIndustry = this.industryService.getDatasetByName(result.defaultName);
+        if (existingIndustry) {
+          isDuplicate = true;
+        }
+      }
+
+      if (isDuplicate) {
+        this.duplicates.push(result);
+      }
+    }
+
+    if (this.duplicates.length > 0) {
+      this.showDuplicateDialog = true;
+    } else {
+      // No duplicates, proceed with import and complete batch processing
+      await this.importAllBatchResults();
+      this.completeBatchProcessing();
+    }
+  }
+
+  async confirmDuplicateOverwrite(): Promise<void> {
+    // User confirmed to overwrite duplicates
+    await this.importAllBatchResults();
+    this.showDuplicateDialog = false;
+    this.completeBatchProcessing();
+  }
+
+  cancelDuplicateImport(): void {
+    // Remove duplicates from batch results
+    this.batchResults = this.batchResults.filter(result =>
+      !this.duplicates.some(dup => dup.defaultName === result.defaultName)
+    );
+
+    if (this.batchResults.length > 0) {
+      // Import non-duplicate files
+      this.importAllBatchResults().then(() => {
+        this.completeBatchProcessing();
+      });
+    } else {
+      // Nothing to import
+      this.completeBatchProcessing();
+    }
+
+    this.showDuplicateDialog = false;
+  }
+
+  private async importAllBatchResults(): Promise<void> {
+    let successCount = 0;
+
+    for (const result of this.batchResults) {
+      try {
+        if (result.type === 'prices') {
+          await this.pricesService.savePricesData(result.data);
+
+          // Save to main OCR database
+          const extractedData = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+            filename: result.file.name,
+            extractedText: result.data.originalText || 'Prices data extracted',
+            timestamp: new Date().toISOString(),
+            processed: false,
+            pricesData: result.data
+          };
+          await this.databaseService.saveData(extractedData);
+
+        } else if (result.type === 'industry') {
+          await this.industryService.saveIndustryData(result.data, 'overwrite');
+
+          // Save to main OCR database
+          const extractedData = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+            filename: result.file.name,
+            extractedText: result.data.extractedText,
+            timestamp: new Date().toISOString(),
+            processed: false,
+            industryData: result.data
+          };
+          await this.databaseService.saveData(extractedData);
+        }
+
+        successCount++;
+      } catch (error) {
+        console.error(`Error importing ${result.file.name}:`, error);
+      }
+    }
+
+    alert(`Batch import completed! ${successCount} out of ${this.batchResults.length} files imported successfully.`);
+  }
+
+  private completeBatchProcessing(): void {
+    this.showBatchDialog = false;
+    this.resetToFreshUpload();
+    this.dataProcessed.emit();
   }
 }

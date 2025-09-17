@@ -54,10 +54,11 @@
           #fileInput
           (change)="onFileSelect($event)"
           accept="image/*"
+          multiple
           class="file-input"
         >
         <button (click)="fileInput.click()" class="upload-btn">
-          Choose Image
+          Choose Images
         </button>
       </div>
 
@@ -75,7 +76,7 @@
           <div class="paste-text">
             <strong>Paste screenshot here</strong>
             <p>Click here and press Ctrl+V (or Cmd+V) to paste from clipboard</p>
-            <p><em>Or drag and drop an image file</em></p>
+            <p><em>Or drag and drop image files (multiple files supported)</em></p>
           </div>
         </div>
       </div>
@@ -184,6 +185,68 @@
         >
           Cancel
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Processing Dialog -->
+  <div *ngIf="showBatchDialog" class="industry-dialog-overlay">
+    <div class="industry-dialog">
+      <h3>Batch Processing Files</h3>
+      <p>Processing {{ batchProgress.total }} files of type: {{ selectedDataType }}</p>
+
+      <div class="batch-progress">
+        <div class="progress-info">
+          <p><strong>Progress:</strong> {{ batchProgress.current }} / {{ batchProgress.total }}</p>
+          <p *ngIf="batchProgress.currentFile"><strong>Current File:</strong> {{ batchProgress.currentFile }}</p>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="(batchProgress.current / batchProgress.total) * 100"></div>
+        </div>
+      </div>
+
+      <div *ngIf="!isProcessing && batchResults.length > 0" class="batch-summary">
+        <h4>Processing Complete</h4>
+        <p><strong>Successfully processed:</strong> {{ batchResults.length }} files</p>
+        <div class="batch-results-preview">
+          <div *ngFor="let result of batchResults.slice(0, 3)" class="batch-result-item">
+            <strong>{{ result.defaultName }}</strong> ({{ result.file.name }})
+          </div>
+          <p *ngIf="batchResults.length > 3">...and {{ batchResults.length - 3 }} more</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Duplicate Confirmation Dialog -->
+  <div *ngIf="showDuplicateDialog" class="industry-dialog-overlay">
+    <div class="industry-dialog">
+      <h3>Duplicate Names Found</h3>
+      <p>Some files have names that already exist in the database:</p>
+
+      <div class="duplicates-list">
+        <div *ngFor="let duplicate of duplicates" class="duplicate-item">
+          <strong>{{ duplicate.defaultName }}</strong>
+          <span class="file-info">(from {{ duplicate.file.name }})</span>
+        </div>
+      </div>
+
+      <div class="duplicate-options">
+        <p>Choose an action:</p>
+        <div class="dialog-actions">
+          <button
+            (click)="confirmDuplicateOverwrite()"
+            class="save-btn overwrite-btn"
+          >
+            Overwrite Existing ({{ duplicates.length }})
+          </button>
+          <button
+            (click)="cancelDuplicateImport()"
+            class="cancel-btn skip-btn"
+          >
+            Skip Duplicates (Import {{ batchResults.length - duplicates.length }})
+          </button>
+        </div>
       </div>
     </div>
   </div>

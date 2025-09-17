@@ -33,6 +33,13 @@
     >
       View Results
     </button>
+    <button
+      (click)="navigateToView('/resource-tree')"
+      [class.active]="isActiveRoute('/resource-tree')"
+      class="nav-btn"
+    >
+      Resource Tree
+    </button>
   </nav>
 
   <main class="app-main">

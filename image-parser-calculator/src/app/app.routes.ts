@@ -25,5 +25,9 @@ export const routes: Routes = [
   {
     path: 'building-details/:name',
     loadComponent: () => import('./building-details/building-details').then(m => m.BuildingDetails)
+  },
+  {
+    path: 'resource-tree',
+    loadComponent: () => import('./resource-tree/resource-tree').then(m => m.ResourceTreeComponent)
   }
 ];

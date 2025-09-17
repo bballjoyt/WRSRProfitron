@@ -1,0 +1,233 @@
+<div class="resource-tree-container">
+  <div class="header">
+    <h2>Production Chain Tree</h2>
+    <div class="controls">
+      <button (click)="generateTree()" [disabled]="loading" class="btn-primary">
+        {{ loading ? 'Generating...' : 'Refresh Tree' }}
+      </button>
+      <button (click)="toggleView()" class="btn-secondary">
+        {{ showDetailedView ? 'Simple View' : 'Detailed View' }}
+      </button>
+      <button (click)="exportTreeData()" [disabled]="!resourceTree" class="btn-export">
+        Export Tree Data
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Generating production chains...</p>
+  </div>
+
+  <div *ngIf="resourceTree && !loading" class="tree-content">
+
+    <!-- Summary Section -->
+    <div class="summary-section">
+      <h3>Chain Analysis Summary</h3>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <h4>Production Chains</h4>
+          <p class="summary-number">{{ getChains().length }}</p>
+        </div>
+        <div class="summary-card">
+          <h4>Total Buildings</h4>
+          <p class="summary-number">{{ getTotalBuildings() }}</p>
+        </div>
+        <div class="summary-card">
+          <h4>Isolated Buildings</h4>
+          <p class="summary-number">{{ getIsolatedBuildings().length }}</p>
+        </div>
+        <div class="summary-card">
+          <h4>Connected Chains</h4>
+          <p class="summary-number">{{ getChains().length }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- D3 Tree Visualization Section -->
+    <div class="d3-trees-section" *ngIf="getChains().length > 0">
+      <h3>Production Chain Trees</h3>
+      <p class="section-description">
+        Interactive tree visualization showing connected buildings with ratios and resource flows. Final products at top, raw materials at bottom.
+      </p>
+
+      <div #treeContainer class="d3-tree-container"></div>
+    </div>
+
+    <!-- Production Chains Section (Fallback) -->
+    <div class="chains-section" *ngIf="getChains().length > 0">
+      <h3>Production Chain Details</h3>
+      <p class="section-description">
+        Detailed view of each production chain with building information and resource flows.
+      </p>
+
+      <div *ngFor="let chain of getChains()" class="production-chain">
+        <div class="chain-header">
+          <h4>{{ chain.name }}</h4>
+          <div class="chain-info">
+            <span class="info-badge">{{ chain.buildings.length }} buildings</span>
+            <span class="info-badge">{{ chain.finalProducts.length }} final product(s)</span>
+            <span class="info-badge">{{ chain.rootInputs.length }} market input(s)</span>
+          </div>
+        </div>
+
+        <!-- Visual Tree Display -->
+        <div class="chain-visualization">
+          <div class="tree-container">
+
+            <!-- Buildings positioned by level -->
+            <div class="tree-levels">
+              <div *ngFor="let level of getChainLevels(chain); let levelIndex = index"
+                   class="tree-level"
+                   [style.margin-top.px]="levelIndex * 150">
+
+                <div class="level-label">
+                  <span *ngIf="levelIndex === 0" class="level-text">Final Products</span>
+                  <span *ngIf="levelIndex === getChainLevels(chain).length - 1 && levelIndex > 0" class="level-text">Raw Materials</span>
+                  <span *ngIf="levelIndex > 0 && levelIndex < getChainLevels(chain).length - 1" class="level-text">Level {{ levelIndex }}</span>
+                </div>
+
+                <div class="buildings-row">
+                  <div *ngFor="let building of level" class="building-node">
+                    <div class="building-card"
+                         [class.final-product]="building.level === 0"
+                         [class.intermediate]="building.level > 0">
+
+                      <div class="building-header">
+                        <h5>{{ building.name }}</h5>
+                        <span class="ratio-badge">{{ formatRatio(building.ratio) }}x</span>
+                      </div>
+
+                      <!-- Inputs -->
+                      <div class="resource-flow inputs" *ngIf="building.inputs.length > 0">
+                        <div class="flow-label">Inputs:</div>
+                        <div class="resource-list">
+                          <div *ngFor="let input of building.inputs" class="resource-item">
+                            <span class="resource-name">{{ input.resourceName }}</span>
+                            <span class="resource-quantity">{{ formatRatio(input.quantity) }}</span>
+                            <span class="resource-source"
+                                  [class.market-source]="input.sourceType === 'market'"
+                                  [class.building-source]="input.sourceType === 'building'">
+                              {{ input.sourceType === 'market' ? 'Market' : input.sourceBuilding }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Outputs -->
+                      <div class="resource-flow outputs" *ngIf="building.outputs.length > 0">
+                        <div class="flow-label">Outputs:</div>
+                        <div class="resource-list">
+                          <div *ngFor="let output of building.outputs" class="resource-item">
+                            <span class="resource-name">{{ output.resourceName }}</span>
+                            <span class="resource-quantity">{{ formatRatio(output.quantity) }}</span>
+                            <span class="resource-consumers" *ngIf="output.consumers.length > 0">
+                              → {{ output.consumers.join(', ') }}
+                            </span>
+                            <span class="resource-consumers final-product" *ngIf="output.consumers.length === 0">
+                              → Final Product
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Detailed view extra info -->
+                      <div class="building-details" *ngIf="showDetailedView">
+                        <div class="detail-line">
+                          <strong>Level:</strong> {{ building.level }}
+                        </div>
+                        <div class="detail-line" *ngIf="building.inputs.length > 0">
+                          <strong>Market Inputs:</strong>
+                          {{ getMarketInputsForBuilding(building) }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Connection lines to next level -->
+                    <div class="connections" *ngIf="levelIndex < getChainLevels(chain).length - 1">
+                      <div *ngFor="let output of building.outputs" class="connection-line">
+                        <div *ngFor="let consumer of output.consumers" class="line-to-consumer">
+                          <div class="connection-arrow">↓</div>
+                          <div class="connection-label">{{ output.resourceName }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chain Summary -->
+        <div class="chain-summary" *ngIf="showDetailedView">
+          <h5>Chain Summary</h5>
+          <div class="summary-details">
+            <p><strong>Final Products:</strong> {{ chain.finalProducts.join(', ') }}</p>
+            <p><strong>Raw Material Inputs:</strong> {{ chain.rootInputs.join(', ') }}</p>
+            <p><strong>Building Ratios:</strong></p>
+            <ul class="ratio-list">
+              <li *ngFor="let building of chain.buildings">
+                {{ building.name }}: {{ formatRatio(building.ratio) }}x
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Isolated Buildings Section -->
+    <div class="isolated-section" *ngIf="getIsolatedBuildings().length > 0">
+      <h3>Isolated Buildings</h3>
+      <p class="section-description">
+        These buildings are not connected to any production chains in your current dataset.
+      </p>
+
+      <div class="isolated-buildings">
+        <div *ngFor="let building of getIsolatedBuildings()" class="building-card isolated">
+          <div class="building-header">
+            <h5>{{ building.name }}</h5>
+            <span class="ratio-badge">{{ formatRatio(building.ratio) }}x</span>
+          </div>
+
+          <div class="building-info">
+            <p><strong>Inputs:</strong> {{ getInputSummary(building) }}</p>
+            <p><strong>Outputs:</strong> {{ getOutputSummary(building) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <h4>Legend</h4>
+      <div class="legend-items">
+        <div class="legend-item">
+          <span class="color-box final-product"></span>
+          <span>Final Product Buildings - End of production chain</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-box intermediate"></span>
+          <span>Intermediate Buildings - Part of production chain</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-box market-source"></span>
+          <span>Market Sourced - Must purchase from global market</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-box building-source"></span>
+          <span>Building Sourced - Produced by another building in chain</span>
+        </div>
+        <div class="legend-item">
+          <span class="ratio-example">2.35x</span>
+          <span>Building Ratio - Number of buildings needed for optimal production</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

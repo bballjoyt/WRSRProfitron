@@ -29,10 +29,6 @@ export interface IndustryBuilding {
   consumption: {
     inputs: ResourceRequirement[];
   };
-  pollution: {
-    level: number; // Pollution level generated
-    type?: string; // Type of pollution if specified
-  };
   profitability: {
     dailyCost: number;
     dailyRevenue: number;
@@ -40,6 +36,13 @@ export interface IndustryBuilding {
     yearlyProfit: number;
     monthlyProfit: number;
     profitPerWorkerDay: number;
+  };
+  metadata: {
+    pollution?: {
+      level: number; // Pollution level generated
+      type?: string; // Type of pollution if specified
+    };
+    [key: string]: any; // Allow for future metadata expansion
   };
   originalParsedValues?: IndustryBuilding; // Store original parsed values for reset functionality
 }

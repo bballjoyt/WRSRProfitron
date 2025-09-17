@@ -193,14 +193,6 @@
   font-weight: 600;
 }
 
-.pollution-badge {
-  background: #fed7d7;
-  color: #c53030;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  font-weight: 500;
-}
 
 .building-details {
   margin-bottom: 15px;
@@ -725,29 +717,6 @@
   margin-top: 2px;
 }
 
-/* Environmental Impact */
-.pollution-details .pollution-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.pollution-details .pollution-item:last-child {
-  border-bottom: none;
-}
-
-.pollution-label {
-  font-weight: 500;
-  color: #4a5568;
-}
-
-.pollution-value {
-  font-family: monospace;
-  font-weight: bold;
-  color: #e53e3e;
-}
 
 .close-details-btn {
   padding: 10px 20px;

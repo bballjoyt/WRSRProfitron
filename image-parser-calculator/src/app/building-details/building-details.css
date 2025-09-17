@@ -346,9 +346,6 @@
   color: #2d3748;
 }
 
-.info-value.pollution {
-  color: #e53e3e;
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {

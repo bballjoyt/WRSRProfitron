@@ -270,6 +270,7 @@ export class OcrService {
     // Extract consumption data
     const consumption = this.extractConsumptionData(text);
 
+
     // Extract pollution
     const pollution = this.extractPollutionData(text);
 
@@ -292,10 +293,6 @@ export class OcrService {
       consumption: {
         inputs: consumption.inputs || []
       },
-      pollution: {
-        level: pollution || 0,
-        type: 'air' // Default type
-      },
       profitability: {
         dailyCost: 0,
         dailyRevenue: 0,
@@ -303,6 +300,12 @@ export class OcrService {
         yearlyProfit: 0,
         monthlyProfit: 0,
         profitPerWorkerDay: 0
+      },
+      metadata: {
+        pollution: pollution ? {
+          level: pollution,
+          type: 'air' // Default type
+        } : undefined
       }
     };
 
@@ -542,27 +545,6 @@ export class OcrService {
     return { inputs };
   }
 
-  private extractPollutionData(text: string): number {
-    const lines = text.split('\n').filter(line => line.trim());
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      if (line.toLowerCase().includes('environment pollution')) {
-        // Check the next line for pollution data
-        if (i + 1 < lines.length) {
-          const nextLine = lines[i + 1].trim();
-          // Look for patterns like "ad 10.00 tons/year" or "a 8.20 tons/year"
-          const pollutionMatch = nextLine.match(/[ad]*\s*(\d+(?:\.\d+)?)\s*tons?[\s\/]*year/i);
-          if (pollutionMatch) {
-            return parseFloat(pollutionMatch[1]);
-          }
-        }
-      }
-    }
-
-    return 0;
-  }
 
   private extractMaxWorkers(text: string): number {
     const lines = text.split('\n').filter(line => line.trim());
@@ -644,6 +626,28 @@ export class OcrService {
 
     console.log('❌ No maxWorkers found, defaulting to 1');
     return 1; // Default to 1 instead of 0 to avoid division by zero
+  }
+
+  private extractPollutionData(text: string): number {
+    const lines = text.split('\n').filter(line => line.trim());
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (line.toLowerCase().includes('environment pollution')) {
+        // Check the next line for pollution data
+        if (i + 1 < lines.length) {
+          const nextLine = lines[i + 1].trim();
+          // Look for patterns like "ad 10.00 tons/year" or "a 8.20 tons/year"
+          const pollutionMatch = nextLine.match(/[ad]*\s*(\d+(?:\.\d+)?)\s*tons?[\s\/]*year/i);
+          if (pollutionMatch) {
+            return parseFloat(pollutionMatch[1]);
+          }
+        }
+      }
+    }
+
+    return 0;
   }
 
   private parseMaterialLine(line: string): ResourceRequirement | null {

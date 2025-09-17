@@ -120,7 +120,6 @@
         <p><strong>Buildings Found:</strong> {{ industryData.totalBuildings }}</p>
         <div *ngFor="let building of industryData.buildings.slice(0, 3)" class="building-preview">
           <strong>{{ building.name }}</strong>
-          <span *ngIf="building.pollution?.level"> (Pollution: {{ building.pollution.level }})</span>
         </div>
         <p *ngIf="industryData.buildings.length > 3">
           ... and {{ industryData.buildings.length - 3 }} more buildings
@@ -226,7 +225,6 @@
           <div *ngFor="let building of extractedData.industryData.buildings.slice(0, 3)" class="building-item">
             <div class="building-header">
               <strong>{{ building.name }}</strong>
-              <span *ngIf="building.pollution?.level" class="pollution-info"> (Pollution: {{ building.pollution.level }}{{ building.pollution.type ? ' ' + building.pollution.type : '' }})</span>
             </div>
             <div class="building-details">
               <span *ngIf="building.production?.outputs?.length">Produces: {{ getOutputNames(building) }}</span>

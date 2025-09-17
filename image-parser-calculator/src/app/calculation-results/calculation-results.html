@@ -45,7 +45,6 @@
             <div class="building-item" *ngFor="let building of item.industryData.buildings.slice(0, 3)">
               <div class="building-header">
                 <span class="building-name">{{ building.name }}</span>
-                <span *ngIf="building.pollution?.level" class="pollution-info">(Pollution: {{ building.pollution.level }})</span>
               </div>
               <div class="building-details">
                 <span *ngIf="building.production?.outputs?.length" class="produces">Produces: {{ getOutputNames(building) }}</span>

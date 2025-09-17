@@ -1,45 +1,12 @@
 <div class="upload-container">
-  <h2>Upload Image for Processing</h2>
-
-  <div class="upload-options">
-    <div class="file-input-container">
-      <input
-        type="file"
-        #fileInput
-        (change)="onFileSelect($event)"
-        accept="image/*"
-        class="file-input"
-      >
-      <button (click)="fileInput.click()" class="upload-btn">
-        Choose Image
-      </button>
-
-    </div>
-
-    <div class="or-divider">OR</div>
-
-    <div
-      class="paste-area"
-      (paste)="onPaste($event)"
-      (dragover)="onDragOver($event)"
-      (drop)="onDrop($event)"
-      tabindex="0"
-    >
-      <div class="paste-content">
-        <div class="paste-icon">📋</div>
-        <div class="paste-text">
-          <strong>Paste screenshot here</strong>
-          <p>Click here and press Ctrl+V (or Cmd+V) to paste from clipboard</p>
-          <p><em>Or drag and drop an image file</em></p>
-        </div>
+  <!-- Image preview and controls - shown at top when image is selected -->
+  <div *ngIf="selectedFile" class="preview-container top-preview">
+    <div class="preview-header">
+      <h3>Selected Image</h3>
+      <div class="preview-actions">
+        <button (click)="clearImage()" class="clear-btn">×</button>
       </div>
     </div>
-  </div>
-
-  <div *ngIf="selectedFile" class="preview-container">
-    <h3>Selected Image:</h3>
-    <img [src]="imagePreview" alt="Preview" class="image-preview">
-    <p>{{ selectedFile.name }}</p>
 
     <div class="data-type-selector">
       <label class="radio-option">
@@ -69,6 +36,65 @@
     >
       {{ isProcessing ? 'Processing...' : 'Extract Data' }}
     </button>
+
+    <div class="image-container">
+      <img [src]="imagePreview" alt="Preview" class="image-preview">
+      <p class="file-name">{{ selectedFile.name }}</p>
+    </div>
+  </div>
+
+  <!-- Upload area - shown when no image is selected -->
+  <div *ngIf="!selectedFile" class="upload-section">
+    <h2>Upload Image for Processing</h2>
+
+    <div class="upload-options">
+      <div class="file-input-container">
+        <input
+          type="file"
+          #fileInput
+          (change)="onFileSelect($event)"
+          accept="image/*"
+          class="file-input"
+        >
+        <button (click)="fileInput.click()" class="upload-btn">
+          Choose Image
+        </button>
+      </div>
+
+      <div class="or-divider">OR</div>
+
+      <div
+        class="paste-area"
+        (paste)="onPaste($event)"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event)"
+        tabindex="0"
+      >
+        <div class="paste-content">
+          <div class="paste-icon">📋</div>
+          <div class="paste-text">
+            <strong>Paste screenshot here</strong>
+            <p>Click here and press Ctrl+V (or Cmd+V) to paste from clipboard</p>
+            <p><em>Or drag and drop an image file</em></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Show a compact upload option when image is selected -->
+  <div *ngIf="selectedFile" class="compact-upload">
+    <button (click)="fileInput.click()" class="change-image-btn">
+      Change Image
+    </button>
+    <input
+      type="file"
+      #fileInput
+      (change)="onFileSelect($event)"
+      accept="image/*"
+      class="file-input"
+      style="display: none;"
+    >
   </div>
 
   <!-- Industry Name Dialog -->

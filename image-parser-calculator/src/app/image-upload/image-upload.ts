@@ -268,8 +268,8 @@ export class ImageUpload {
           alert(`Industry saved as "${this.industryData.userDefinedName}"`);
         }
 
-        // Navigate to results page instead of emitting event
-        this.router.navigate(['/results']);
+        // Reset to fresh upload screen instead of navigating to results
+        this.resetToFreshUpload();
       }
     } catch (error) {
       console.error('Error saving industry data:', error);
@@ -330,10 +330,8 @@ export class ImageUpload {
 
       alert(`Prices data imported successfully! ${resourceCount} resources added.`);
 
-      // Clear the form but don't navigate
-      this.selectedFile = null;
-      this.imagePreview = null;
-      this.extractedData = null;
+      // Reset to fresh upload screen
+      this.resetToFreshUpload();
 
     } catch (error) {
       console.error('Error importing prices data:', error);
@@ -347,5 +345,32 @@ export class ImageUpload {
     this.showPricesDialog = false;
     this.pricesDatasetName = '';
     this.pricesData = null;
+  }
+
+  clearImage(): void {
+    this.selectedFile = null;
+    this.imagePreview = null;
+    this.extractedData = null;
+    this.selectedDataType = 'industry';
+  }
+
+  resetToFreshUpload(): void {
+    // Clear all form data and state
+    this.selectedFile = null;
+    this.imagePreview = null;
+    this.extractedData = null;
+    this.selectedDataType = 'industry';
+    this.isProcessing = false;
+    this.isPricesFile = false;
+    this.isIndustryFile = false;
+
+    // Clear dialog states
+    this.showIndustryNameDialog = false;
+    this.showPricesDialog = false;
+    this.industryName = '';
+    this.pricesDatasetName = '';
+    this.industryData = null;
+    this.pricesData = null;
+    this.nameConflictAction = null;
   }
 }
